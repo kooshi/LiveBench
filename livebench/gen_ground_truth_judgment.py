@@ -356,7 +356,18 @@ def gen_judgments(
             for match in tqdm(matches):
                 results = play_a_match_func(match, output_file=output_file, debug=debug)
         else:
-
+            import multiprocessing
+            try:
+                # 'spawn' is generally the safest for avoiding fork-related deadlocks in threaded apps.
+                # 'force=True' ensures it's set even if it was set differently before (e.g., by a library).
+                multiprocessing.set_start_method('spawn', force=True)
+                print(f"Successfully set multiprocessing start method to: {multiprocessing.get_start_method()}")
+            except RuntimeError as e:
+                # This can happen if the context has already been set and 'force=False' (default)
+                # or if trying to set it after some multiprocessing objects are already in use.
+                print(f"Warning: Could not set multiprocessing start method (it might be already set or in use): {e}")
+                print(f"Current multiprocessing start method: {multiprocessing.get_start_method()}")
+                
             def play_a_match_wrapper(match):
                 return play_a_match_func(match, output_file=output_file, debug=debug)
 
